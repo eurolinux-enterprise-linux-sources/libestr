@@ -1,6 +1,6 @@
 Name:           libestr
-Version:        0.1.5
-Release:        1%{?dist}
+Version:        0.1.9
+Release:        2%{?dist}
 Summary:        String handling essentials library
 
 License:        LGPLv2+
@@ -46,6 +46,16 @@ rm -f %{buildroot}/%{_libdir}/*.{a,la}
 %{_libdir}/pkgconfig/libestr.pc
 
 %changelog
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 0.1.9-2
+- Mass rebuild 2014-01-24
+
+* Fri Jan 10 2014 Tomas Heinrich <theinric@redhat.com> - 0.1.9-1
+- rebase to 0.1.9
+  resolves: #1049645
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 0.1.5-2
+- Mass rebuild 2013-12-27
+
 * Tue Apr 02 2013 Tomas Heinrich <theinric@redhat.com> - 0.1.5-1
 - rebase to 0.1.5
 

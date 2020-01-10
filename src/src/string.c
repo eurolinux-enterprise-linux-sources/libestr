@@ -151,7 +151,13 @@ es_newStrFromNumber(long long num)
 {
 	char numbuf[20];	/* 2^64 has 20 digits ;) */
 	int i,j;
+	char minus = '\0';
 	es_str_t *s;
+	
+	if (num < 0) {
+	    minus = '-';
+	    num = -num;
+	}
 	
 	/* generate string (reversed) */
 	for(i = 0 ; num != 0 ; ++i) {
@@ -160,11 +166,13 @@ es_newStrFromNumber(long long num)
 	}
 	if(i == 0)
 		numbuf [i++] = '0';
+	if (minus != '\0')
+		numbuf[i++] = minus;
 
 	/* now create the actual string */
 	if((s = es_newStr(i)) == NULL) goto done;
 	s->lenStr = i;
-	for(j = 0 ; --i >= 0 ; ++j, --i) {
+	for(j = 0 ; --i >= 0 ; ++j) {
 		es_getBufAddr(s)[j] = numbuf[i];
 	}
 
@@ -212,20 +220,20 @@ es_strbufcmp(es_str_t *s, unsigned char *buf, es_size_t lenBuf)
 
 	ASSERT_STR(s);
 	assert(buf != NULL);
-	if(s->lenStr < lenBuf)
-		r = -1;
-	else if(s->lenStr > lenBuf)
-		r = 1;
-	else {
-		c = es_getBufAddr(s);
-		r = 0;	/* assume: strings equal, will be reset if not */
-		for(i = 0 ; i < s->lenStr ; ++i) {
-			if(c[i] != buf[i]) {
-				r = c[i] - buf[i];
-				break;
-			}
+	c = es_getBufAddr(s);
+	r = 0;	/* assume: strings equal, will be reset if not */
+	for(i = 0 ; i < s->lenStr ; ++i) {
+		if(i == lenBuf) {
+			r = 1; /* strings are so far equal, but second string is smaller */
+			break;
+		}
+		if(c[i] != buf[i]) {
+			r = c[i] - buf[i];
+			break;
 		}
 	}
+	if(r == 0 && s->lenStr < lenBuf)
+		r = -1; /* strings are so far equal, but first string is smaller */
 	return r;
 }
 
@@ -245,20 +253,20 @@ es_strcasebufcmp(es_str_t *s, unsigned char *buf, es_size_t lenBuf)
 
 	ASSERT_STR(s);
 	assert(buf != NULL);
-	if(s->lenStr < lenBuf)
-		r = -1;
-	else if(s->lenStr > lenBuf)
-		r = 1;
-	else {
-		c = es_getBufAddr(s);
-		r = 0;	/* assume: strings equal, will be reset if not */
-		for(i = 0 ; i < s->lenStr ; ++i) {
-			if(tolower(c[i]) != tolower(buf[i])) {
-				r = tolower(c[i]) - tolower(buf[i]);
-				break;
-			}
+	c = es_getBufAddr(s);
+	r = 0;	/* assume: strings equal, will be reset if not */
+	for(i = 0 ; i < s->lenStr ; ++i) {
+		if(i == lenBuf) {
+			r = 1;
+			break;
+		}
+		if(tolower(c[i]) != tolower(buf[i])) {
+			r = tolower(c[i]) - tolower(buf[i]);
+			break;
 		}
 	}
+	if(r == 0 && s->lenStr < lenBuf)
+		r = -1;
 	return r;
 }
 int
@@ -668,6 +676,7 @@ doUnescape(unsigned char *c, es_size_t lenStr, es_size_t *iSrc, es_size_t iDst)
 			c[iDst] = (hexDigitVal(c[(*iSrc)+1]) << 4) +
 				  hexDigitVal(c[(*iSrc)+2]);
 			*iSrc += 2;
+			break;
 		default:
 			/* error, incomplete escape, use as is.  Ideally we
 			   should reject it instead, to allow for future
@@ -675,6 +684,7 @@ doUnescape(unsigned char *c, es_size_t lenStr, es_size_t *iSrc, es_size_t iDst)
 			   es_unescapeStr. */
 			c[iDst] = '\\';
 			--(*iSrc);
+			break;
 		}
 	} else {
 		/* regular character */
